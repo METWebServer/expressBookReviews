@@ -36,6 +36,7 @@ regd_users.post("/login", (req,res) => {
     }
    if (authenticatedUser(username,password)) {
       let accessToken = jwt.sign({
+        username: username,
         data: password
       }, 'access', { expiresIn: 60 * 60 });
       req.session.authorization = {
@@ -49,8 +50,27 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    if (req.user) {
+        users[req.user.username] = {
+            "review": req.params.isbn
+        }
+    }
+    return res.status(200).json({message: "Added a review"});
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    if (req.user) {
+        if (users[req.user.username].review && users[req.user.username].review === req.params.isbn) {
+            users[req.user.username] = {
+                "review": ""
+            }
+            return res.status(201).json({message: "Deleted a review"});
+        } else {
+            return res.status(404).json({message: "Review not found"});
+        }
+    } else {
+        return res.status(404).json({message: "Session not found"});
+    }
 });
 
 module.exports.authenticated = regd_users;
